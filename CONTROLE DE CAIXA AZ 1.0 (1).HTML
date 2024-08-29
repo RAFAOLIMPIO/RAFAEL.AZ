@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de caixa comercial AutoZone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .header img {
+            width: 130mm;
+            height: 13mm;
+        }
+        h1 {
+            text-align: center;
+            color: rgb(255, 8, 0);
+        }
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .clear-button {
+            width: 150px;
+            height: 40px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #ff9900;
+        }
+        select, input[type="text"], input[type="checkbox"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            height: 30px;
+        }
+        .currency-input {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://cdn.worldvectorlogo.com/logos/autozone-logo.svg" alt="AutoZone Logo">
+    </div>
+    <h1>Controle de Pagamento AutoZone</h1>
+    <div class="controls">
+        <button class="clear-button" id="clearButton">Limpar Tudo</button>
+    </div>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Vendedor</th>
+                <th>Cliente</th>
+                <th>Pagamento</th>
+                <th>Total</th>
+                <th>Troco</th>
+                <th>Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <select>
+                        <option value="rafael">Rafael</option>
+                        <option value="garbim">Garbim</option>
+                        <option value="matheus">Matheus</option>
+                    </select>
+                </td>
+                <td><input type="text" placeholder="Nome do Cliente"></td>
+                <td>
+                    <select>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="cartao">Cartão</option>
+                    </select>
+                </td>
+                <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                <td><input type="checkbox"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTableData);
+
+        document.querySelector('tbody').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const currentRow = event.target.closest('tr');
+                const inputs = currentRow.querySelectorAll('input[type="text"], select, input[type="checkbox"]');
+                const newRow = document.createElement('tr');
+
+                // Create a new row with the same structure
+                newRow.innerHTML = `
+                    <td>
+                        <select>
+                            <option value="rafael">Rafael</option>
+                            <option value="garbim">Garbim</option>
+                            <option value="matheus">Matheus</option>
+                        </select>
+                    </td>
+                    <td><input type="text" placeholder="Nome do Cliente"></td>
+                    <td>
+                        <select>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao">Cartão</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                    <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                    <td><input type="checkbox"></td>
+                `;
+
+                // Append the new row after the current row
+                currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+
+                // Focus on the first input of the new row
+                const newRowInputs = newRow.querySelectorAll('input[type="text"], select');
+                if (newRowInputs.length > 0) {
+                    newRowInputs[0].focus();
+                }
+
+                saveTableData();
+            }
+        });
+
+        document.getElementById('clearButton').addEventListener('click', function() {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>
+                        <select>
+			    <option value=""></option>
+                            <option value="rafael">Rafael</option>
+                            <option value="garbim">Garbim</option>
+                            <option value="matheus">Matheus</option>
+                        </select>
+                    </td>
+                    <td><input type="text" placeholder="Nome do Cliente"></td>
+                    <td>
+                        <select>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao">Cartão</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                    <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                    <td><input type="checkbox"></td>
+                </tr>
+            `;
+            localStorage.removeItem('tableData');
+        });
+
+        // Function to save table data to Local Storage
+        function saveTableData() {
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const data = rows.map(row => {
+                const inputs = row.querySelectorAll('input[type="text"], select, input[type="checkbox"]');
+                return Array.from(inputs).map(input => {
+                    if (input.type === 'checkbox') {
+                        return input.checked;
+                    }
+                    return input.value;
+                });
+            });
+            localStorage.setItem('tableData', JSON.stringify(data));
+        }
+
+        // Function to load table data from Local Storage
+        function loadTableData() {
+            const savedData = localStorage.getItem('tableData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const tbody = document.querySelector('tbody');
+                tbody.innerHTML = ''; // Clear existing rows
+                data.forEach(rowData => {
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>
+                            <select>
+                                <option value="rafael">Rafael</option>
+                                <option value="garbim">Garbim</option>
+                                <option value="matheus">Matheus</option>
+                            </select>
+                        </td>
+                        <td><input type="text" placeholder="Nome do Cliente"></td>
+                        <td>
+                            <select>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="cartao">Cartão</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                        <td><input type="text" class="currency-input" placeholder="R$ 0,00"></td>
+                        <td><input type="checkbox"></td>
+                    `;
+                    const inputs = newRow.querySelectorAll('input[type="text"], select, input[type="checkbox"]');
+                    inputs.forEach((input, index) => {
+                        if (input.type === 'checkbox') {
+                            input.checked = rowData[index];
+                        } else {
+                            input.value = rowData[index];
+                        }
+                    });
+                    tbody.appendChild(newRow);
+                });
+            }
+        }
+
+        // Save data on input changes
+        document.querySelector('tbody').addEventListener('input', saveTableData);
+
+    </script>
+</body>
+</html>
